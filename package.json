@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "main": "index.js",
-  "author": "Nguyen Trung Tin",
+  "author": "Nguyen Trung Tin ",
   "license": "CSMS",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
