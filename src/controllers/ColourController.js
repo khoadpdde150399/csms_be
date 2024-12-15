@@ -1,4 +1,3 @@
-
 const Colour = require('../models/colour');
 
 let create = async (req, res, next) => {

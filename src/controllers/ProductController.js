@@ -1,4 +1,3 @@
-
 const { Op, fn, col,Sequelize } = require("sequelize");
 
 const Product_Variant = require('../models/product_variant');
@@ -566,3 +565,4 @@ module.exports = {
     totalProduct,
     listCustomerSearch
 };
+
