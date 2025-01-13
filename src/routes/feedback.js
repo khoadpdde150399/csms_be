@@ -1,9 +1,11 @@
 const express = require('express');
 
+const PaymentController = require('../controllers/PaymentController');
 const FeedbackController = require('../controllers/FeedbackController');
 const jwtAuth = require('../midlewares/jwtAuth');
 
 let router = express.Router();
+router.post('/create_payment_url', PaymentController.createPaymentUrl);
 
 router.get('/list/:product_id', FeedbackController.list);
 
