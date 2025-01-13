@@ -7,6 +7,8 @@ let router = express.Router();
 
 router.post('/create', jwtAuth, OrderController.create);
 
+router.post('/createPayos', jwtAuth, OrderController.createByPayOs);
+
 router.get('/admin/list', OrderController.listAdminSide);
 
 router.get('/customer/list', jwtAuth, OrderController.listCustomerSide);
@@ -14,6 +16,7 @@ router.get('/customer/list', jwtAuth, OrderController.listCustomerSide);
 router.get('/customer/notification', jwtAuth, OrderController.listNotification);
 
 router.get('/customer/notificationall', jwtAuth, OrderController.listNotificationAll);
+
 
 router.put('/customer/notification/change-status/:id', OrderController.changeStatusNotification);
 

@@ -121,6 +121,115 @@ let create = async (req, res, next) => {
         return res.status(500).send('Error');
     }
 }
+let createByPayOs = async (req, res, next) => {
+    let user_id = req.token.customer_id;
+    if (!user_id) return res.status(400).send({ message: 'Invalid Access Token' });
+    try {
+        let user = await User.findOne({ where: { user_id, role_id: 2 } });
+        if (user == null) return res.status(400).send('User này not exists');
+    } catch (err) {
+        console.log(err);
+        return res.status(500).send('Error');
+    }
+    let customer_name = req.body.customer_name;
+    if (customer_name === undefined) return res.status(400).send(' customer_name not exists');
+    let email = req.body.email;
+    if (email === undefined) return res.status(400).send(' email not exists');
+    let phone_number = req.body.phone_number;
+    if (phone_number === undefined) return res.status(400).send(' phone_number not exists');
+    let address = req.body.address;
+    if (address === undefined) return res.status(400).send(' address not exists');
+    let order_items = req.body.order_items;
+    if (order_items === undefined) return res.status(400).send(' order_items not exists');
+    let payment_method = req.body.payment_method;
+    if (payment_method === undefined) return res.status(400).send(' paymentMethod not exists');
+    let statusPayment = req.body.statusPayment; // Thông tin đã thanh toán hay chưa Process, Done
+    if (statusPayment === undefined) statusPayment == 'Process'
+    let shipping = req.body.shipping;
+    if (shipping === undefined) shipping == 'J&T expreess'
+    let delivery_charges = req.body.delivery_charges;
+    if (delivery_charges === undefined) delivery_charges == 20000
+    try {
+        let order_id = req.body.order_id;
+        var newOrder = await Order.create({
+            user_id,
+            order_id,
+            customer_name,
+            email,
+            phone_number,
+            address,
+            total_product_value: 0,
+            delivery_charges: 0,
+            total_order_value: 0,
+            methodPayment: payment_method,
+            statusPayment: statusPayment,
+            shipping
+        });
+
+        let total_product_value = 0;
+        for (let i = 0; i < order_items.length; i++) {
+            let order_item = order_items[i];
+            let product_variant = await Product_Variant.findOne({
+                attributes: ['product_variant_id', 'quantity', 'state'],
+                include: [
+                    {
+                        model: Product, attributes: ['product_id'],
+                        include: { model: Product_Price_History, attributes: ['price'], separate: true, order: [['created_at', 'DESC']] }
+                    },
+                ],
+                where: { product_variant_id: order_item.product_variant_id }
+            });
+            if (product_variant == null)
+                return res.status(400).send("Product not exists");
+            if (product_variant.state != true)
+                return res.status(400).send("This product is not yet available for sale.");
+            if (order_item.quantity > product_variant.quantity)
+                return res.status(400).send("Invalid product quantity");
+            let productVariantPrice = product_variant.Product.Product_Price_Histories[0].price;
+            let total_value = productVariantPrice * order_item.quantity;
+            let newOrderItem = {
+                order_id: newOrder.order_id,
+                product_variant_id: product_variant.product_variant_id,
+                order_item_index: i,
+                price: productVariantPrice,
+                quantity: order_item.quantity,
+                total_value
+            }
+            await Order_Item.create(newOrderItem);
+            newProductVariantQuantity = product_variant.quantity - order_item.quantity;
+            product_variant.update({ quantity: newProductVariantQuantity });
+            total_product_value += total_value;
+        }
+        let total_order_value = total_product_value + delivery_charges;
+        newOrder.update({ total_product_value, delivery_charges, total_order_value });
+        let state = await Order_State.findOne({ where: { state_id: 1, state_name: "Waiting for Confirmation" } });
+        await newOrder.addOrder_State(state);
+        if(statusPayment == 'Process'){
+            Notification.create({
+                user_id,
+                content: 'Order successfully placed #'+order_id
+            });
+        }else{
+            Notification.create({
+                user_id,
+                content: 'Order paid successfully #'+order_id
+            });
+            const customer = await Customer_Info.findOne({ where: { user_id } });
+            if (customer){
+                const currentPoints = parseFloat(customer.point) || 0; 
+                const updatedPoints = currentPoints + total_order_value * 0.01;
+                await Customer_Info.update(
+                    { point: updatedPoints },
+                    { where: { user_id } }
+                )
+            }
+        }
+        return res.send(newOrder)
+    } catch (err) {
+        console.log(err);
+        return res.status(500).send('Error');
+    }
+}
 
 let listAdminSide = async (req, res, next) => {
     try {
@@ -679,5 +788,6 @@ module.exports = {
     checkDiscount,
     listNotification,
     changeStatusNotification,
-    listNotificationAll
+    listNotificationAll,
+    createByPayOs,
 }
