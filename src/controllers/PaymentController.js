@@ -16,8 +16,8 @@ const createPaymentUrl = async (req, res) => {
         orderCode,
         amount,
         description,
-        cancelUrl: "http://localhost:3001/cart",
-        returnUrl: "http://localhost:3001/cart",
+        cancelUrl: "https://www.csms.io.vn/cart",
+        returnUrl: "https://www.csms.io.vn/cart",
     };
     try {
         const paymentUrl = await payos.createPaymentLink(requestData);
@@ -39,8 +39,8 @@ const getPaymentInformation = async (req, res) => {
     }
 }
 const receiveHook = async (req, res) => {
-   console.log(req.body);
-  };
+    console.log(req.body);
+};
 module.exports = {
     createPaymentUrl,
     getPaymentInformation,
