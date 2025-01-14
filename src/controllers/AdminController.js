@@ -25,17 +25,17 @@ let register = async (req, res, next) => {
 
 let login = async (req, res, next) => {
     let email = req.body.email;
-    if (email === undefined) return res.status(400).send(' email Not Exists');
+    if (email === undefined) return res.status(400).send('Email Not Exists');
     
     let password = req.body.password;
-    if (password === undefined) return res.status(400).send(' password Not Exists');
+    if (password === undefined) return res.status(400).send('Password Not Exists');
 
     try {
         // Tìm kiếm user với email và role_id là Admin (1) hoặc Staff (3)
         let user = await User.findOne({ 
             where: { 
                 email, 
-                role_id: [1, 3]  // Kiểm tra cả role Admin và Staff
+                role_id: [1, 3, 4 ,5]  // Kiểm tra cả role Admin và Staff
             } 
         });
         if (!user) {
@@ -46,12 +46,21 @@ let login = async (req, res, next) => {
         if (!isPasswordValid) {
             return res.status(401).send("Password is incorrect");
         }
-        // console.log("Role", user);
+
+        // Tạo token
         const token = jwt.sign({ email }, process.env.REFRESHTOKEN_SECRET_KEY, { expiresIn: process.env.REFRESHTOKEN_EXPIRES_IN });
-        // Đăng nhập thành công, trả về thông tin người dùng
-        // console.log('Generated Token:', token);
+
+        // Xác định xem cần 2FA hay không
         const requires2FA = !!user.twoFASecret;
-        return res.send({ email: user.email, role_id: user.role_id, token, requires2FA  });
+
+        // Đăng nhập thành công, trả về thông tin người dùng kèm user_id
+        return res.send({
+            email: user.email,
+            role_id : user.role_id,
+            admin_id : user.user_id, // Thêm user_id vào phản hồi
+            token,
+            requires2FA
+        });
     } catch (err) {
         console.log(err);
         return res.status(400).send("There was an error during login, please try again");

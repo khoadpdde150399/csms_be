@@ -12,7 +12,7 @@ const feedback = require('./feedback');
 const coupon = require('./coupon');
 const user = require('./user');
 const comments = require('./comments');
-const payment = require('./payment');
+const orderschedule = require('./orderschedule');
 
 function setRoute(server) {
 
@@ -31,6 +31,8 @@ function setRoute(server) {
     server.use('/api/product-variant', product_variantRouter);
 
     server.use('/api/order', order);
+
+    server.use('/api/orderschedule', orderschedule)
     
     server.use('/api/comments', comments);
 
@@ -39,8 +41,6 @@ function setRoute(server) {
     server.use('/api/coupon', coupon);
 
     server.use('/api/user', user);
-    
-    server.use('/api/payment', payment);
 }
 
 module.exports = setRoute;
